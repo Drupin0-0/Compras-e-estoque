@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baú da Alegria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f4ef;
+    --card:#ffffff;
+    --ink:#1a2129;
+    --muted:#6b7280;
+    --muted-2:#9aa1ab;
+    --line:#e6e4dc;
+    --accent:#0f766e;
+    --accent-dark:#0b5952;
+    --accent-soft:#e3f2f0;
+    --warn:#b45309;
+    --warn-soft:#fdf3e2;
+    --danger:#c0392b;
+    --danger-soft:#fdecea;
+    --violet:#6d5bd0;
+    --violet-soft:#eeecfb;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .num, .qty-val, .mono{ font-family:'IBM Plex Mono', ui-monospace, Menlo, monospace; font-variant-numeric:tabular-nums }
+  h1,h2,h3{ font-family:'Sora', 'Inter', sans-serif; letter-spacing:-.01em }
+
+  .topbar{
+    position:sticky;top:0;z-index:20;background:rgba(245,244,239,.92);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);padding:16px 16px 0;
+  }
+  .wrap{max-width:920px;margin:0 auto}
+  .title-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  h1{font-size:1.4rem;margin:0;font-weight:800}
+  .sub{color:var(--muted);font-size:.82rem;margin:2px 0 0}
+
+  .tabs{display:flex;gap:4px;margin-top:16px}
+  .tab-btn{
+    appearance:none;border:none;background:none;cursor:pointer;
+    padding:10px 6px 12px;font-size:.92rem;font-weight:600;color:var(--muted-2);
+    border-bottom:2.5px solid transparent;margin-right:14px;font-family:'Sora',sans-serif;
+  }
+  .tab-btn.active{color:var(--accent-dark);border-bottom-color:var(--accent)}
+
+  main{padding:22px 16px 72px}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:26px}
+  .kpi{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 14px;min-width:0;
+  }
+  .kpi .n{font-size:1.28rem;font-weight:700;font-family:'IBM Plex Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kpi .l{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+  .kpi.accent{background:var(--accent);border-color:var(--accent)}
+  .kpi.accent .n,.kpi.accent .l{color:#fff}
+
+  section.batch{margin-bottom:26px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .batch-head{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 16px;border-bottom:1px solid var(--line);background:#fafaf7;
+  }
+  .batch-head h2{font-size:.98rem;margin:0;font-weight:700}
+  .batch-head .batch-total{font-size:.8rem;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+
+  table{width:100%;border-collapse:collapse}
+  thead th{
+    text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--muted);padding:9px 16px;border-bottom:1px solid var(--line);
+  }
+  tbody td{padding:11px 16px;border-bottom:1px solid var(--line);font-size:.88rem;vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#fbfbf9}
+  .prod{font-weight:600;font-size:.92rem}
+  .code{color:var(--muted-2);font-size:.72rem}
+  .dup{
+    display:inline-block;margin-left:6px;font-size:.64rem;font-weight:600;
+    background:var(--accent-soft);color:var(--accent-dark);padding:1px 7px;border-radius:100px;vertical-align:middle;
+  }
+  .badge-min{background:var(--accent-soft);color:var(--accent-dark)}
+  .badge-max{background:var(--warn-soft);color:var(--warn)}
+  .price-badge{
+    display:inline-block;font-size:.62rem;font-weight:700;padding:1px 6px;border-radius:100px;margin-left:6px;vertical-align:middle;
+  }
+  .num{text-align:right;white-space:nowrap}
+  .cost-cell{min-width:110px}
+  .cost-val{font-weight:700;color:var(--accent-dark)}
+  .cost-bar-track{height:5px;background:#eef0ee;border-radius:6px;margin-top:5px;overflow:hidden}
+  .cost-bar-fill{height:100%;background:var(--accent);border-radius:6px}
+  tfoot td{padding:12px 16px;font-weight:700;border-top:1.5px solid var(--ink);font-size:.86rem;background:#fafaf7}
+
+  .swatch{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+  .sw-rosa{background:#ec4899}.sw-vermelho{background:#dc2626}.sw-azul{background:#2563eb}
+  .sw-verde{background:#16a34a}.sw-roxa{background:#7c3aed}.sw-outro{background:#9ca3af}
+
+  /* estoque controls */
+  .estoque-toolbar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .search-box{
+    flex:1;min-width:180px;display:flex;align-items:center;gap:8px;
+    background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;
+  }
+  .search-box input{border:none;outline:none;background:none;font-size:.88rem;width:100%;font-family:inherit}
+  .toggle-btn{
+    display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);
+    border-radius:10px;padding:9px 12px;font-size:.82rem;color:var(--muted);cursor:pointer;font-family:inherit;font-weight:600;
+    white-space:nowrap;
+  }
+  .toggle-btn.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-dark)}
+  .low-alert{
+    background:var(--danger-soft);border:1px solid #f3caca;color:var(--danger);
+    border-radius:var(--radius);padding:12px 16px;font-size:.85rem;margin-bottom:18px;display:none;
+  }
+  .low-alert.show{display:block}
+  .low-alert b{cursor:default}
+
+  details.cat{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);margin-bottom:12px;overflow:hidden}
+  details.cat[open]{}
+  summary.cat-summary{
+    list-style:none;cursor:pointer;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;
+    background:#fafaf7;font-family:'Sora',sans-serif;font-weight:700;font-size:.92rem;gap:10px;
+  }
+  summary.cat-summary::-webkit-details-marker{display:none}
+  .cat-meta{display:flex;align-items:center;gap:10px}
+  .cat-total{font-size:.78rem;color:var(--muted);font-weight:500;font-family:'IBM Plex Mono',monospace}
+  .chev{transition:transform .15s ease;color:var(--muted-2);font-size:.8rem}
+  details.cat[open] .chev{transform:rotate(90deg)}
+
+  .qty-row td{padding:11px 16px}
+  .qty-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .low-badge{
+    font-size:.62rem;font-weight:700;color:var(--danger);background:var(--danger-soft);
+    padding:1px 7px;border-radius:100px;
+  }
+  .qty-bar-wrap{display:flex;align-items:center;gap:10px;justify-content:flex-end}
+  .qty-bar-track{width:56px;height:6px;background:#eef0ee;border-radius:6px;overflow:hidden}
+  .qty-bar-fill{height:100%;border-radius:6px;background:var(--accent)}
+  .qty-controls{display:flex;align-items:center;gap:5px}
+  .qty-btn{
+    width:24px;height:24px;border-radius:7px;border:1px solid var(--line);background:#f5f4f1;
+    color:var(--ink);font-size:.95rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .qty-btn:active{background:var(--accent-soft)}
+  .qty-val{min-width:22px;text-align:center;font-weight:700}
+  .remove-btn{
+    width:24px;height:24px;border-radius:7px;border:1px solid #f0c9c9;background:var(--danger-soft);
+    color:var(--danger);font-size:.85rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:4px;
+  }
+  .add-row{padding:11px 16px;background:#fbfbf9;border-top:1px dashed var(--line)}
+  .add-form{display:flex;gap:8px;flex-wrap:wrap}
+  .add-form input[type="text"]{flex:1;min-width:130px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:.85rem;font-family:inherit}
+  .add-form input[type="number"]{width:64px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:.85rem;font-family:inherit}
+  .add-btn{padding:8px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .new-cat-btn{
+    background:none;border:1.5px dashed var(--line);color:var(--muted);border-radius:var(--radius);
+    padding:12px 14px;font-size:.85rem;cursor:pointer;width:100%;text-align:center;font-family:inherit;font-weight:600;
+  }
+  .save-hint{color:var(--muted-2);font-size:.72rem;text-align:center;margin-top:12px}
+  .empty-state{padding:24px;text-align:center;color:var(--muted);font-size:.85rem}
+
+  /* preços */
+  .margin-panel{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:20px;
+  }
+  .margin-panel .row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+  .margin-panel label{font-size:.85rem;font-weight:700;font-family:'Sora',sans-serif}
+  .margin-val{font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--accent-dark);font-size:1rem}
+  input[type="range"]{width:100%;accent-color:var(--accent)}
+  .margin-hint{font-size:.75rem;color:var(--muted);margin-top:4px}
+
+  .faixa-tag{
+    display:inline-block;font-size:.62rem;font-weight:700;padding:1px 7px;border-radius:100px;
+    background:var(--violet-soft);color:var(--violet);white-space:nowrap;
+  }
+  .price-cell .sugerido{font-weight:700;color:var(--accent-dark);font-size:.95rem}
+  .price-cell .antigo{color:var(--muted-2);font-size:.72rem;text-decoration:line-through}
+  .lucro-pos{color:var(--accent-dark);font-weight:700}
+  .no-cost{color:var(--muted-2);font-size:.78rem;font-style:italic}
+
+  .combo-card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:12px;
+  }
+  .combo-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+  .combo-head h3{margin:0;font-size:.95rem;font-weight:700}
+  .combo-price{font-family:'IBM Plex Mono',monospace;font-weight:800;color:var(--accent-dark);font-size:1.1rem}
+  .combo-items{font-size:.82rem;color:var(--muted);margin-bottom:10px}
+  .combo-stats{display:flex;gap:16px;flex-wrap:wrap;font-size:.78rem}
+  .combo-stats span b{color:var(--ink);font-family:'IBM Plex Mono',monospace}
+  .combo-why{
+    margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);
+    font-size:.78rem;color:var(--warn);
+  }
+
+  /* cupons */
+  .cupom-card{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;
+  }
+  .cupom-card.off{opacity:.55}
+  .cupom-icon{
+    width:38px;height:38px;border-radius:10px;flex:none;
+    background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;
+  }
+  .cupom-info{flex:1;min-width:0}
+  .cupom-info .t1{font-weight:700;font-size:.9rem}
+  .cupom-info .t2{font-size:.76rem;color:var(--muted)}
+  .switch{position:relative;display:inline-block;width:40px;height:22px;flex:none}
+  .switch input{opacity:0;width:0;height:0}
+  .slider-switch{
+    position:absolute;cursor:pointer;inset:0;background:#d7d5cc;border-radius:22px;transition:.15s;
+  }
+  .slider-switch:before{
+    position:absolute;content:"";height:16px;width:16px;left:3px;top:3px;
+    background:#fff;border-radius:50%;transition:.15s;
+  }
+  .switch input:checked + .slider-switch{background:var(--accent)}
+  .switch input:checked + .slider-switch:before{transform:translateX(18px)}
+  .cupom-remove{
+    width:26px;height:26px;border-radius:7px;border:1px solid #f0c9c9;background:var(--danger-soft);
+    color:var(--danger);font-size:.85rem;cursor:pointer;flex:none;display:flex;align-items:center;justify-content:center;
+  }
+  .cupom-add-form{
+    display:flex;gap:8px;flex-wrap:wrap;background:var(--card);border:1px dashed var(--line);
+    border-radius:12px;padding:12px 14px;margin-bottom:18px;
+  }
+  .cupom-add-form input, .cupom-add-form select{
+    padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:.85rem;font-family:inherit;
+  }
+  .cupom-add-form input[type="text"]{flex:1;min-width:150px}
+  .cupom-add-form input[type="number"]{width:80px}
+  .cupom-badge{
+    display:inline-block;font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:100px;
+    background:#fdf0e4;color:#c2540a;margin-left:5px;vertical-align:middle;white-space:nowrap;
+  }
+  .com-cupom-row{font-size:.78rem;color:var(--muted);margin-top:3px}
+  .com-cupom-row b{color:#c2540a}
+  .com-cupom-row.neg b{color:var(--danger)}
+
+  /* vendas */
+  .venda-form{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:22px;
+  }
+  .venda-form h2{margin:0 0 14px;font-size:1rem}
+  .venda-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .venda-grid .full{grid-column:1/-1}
+  .venda-field label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:4px;font-weight:600}
+  .venda-field input, .venda-field select{
+    width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:.88rem;font-family:inherit;
+  }
+  .venda-hint{grid-column:1/-1;font-size:.76rem;color:var(--muted)}
+  .venda-submit{
+    grid-column:1/-1;margin-top:4px;padding:11px;border:none;border-radius:9px;background:var(--accent);
+    color:#fff;font-weight:700;font-size:.9rem;cursor:pointer;font-family:inherit;
+  }
+  .venda-row{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;
+  }
+  .venda-row .vinfo{flex:1;min-width:0}
+  .venda-row .vinfo .t1{font-weight:700;font-size:.88rem}
+  .venda-row .vinfo .t2{font-size:.76rem;color:var(--muted)}
+  .venda-row .vlucro{font-family:'IBM Plex Mono',monospace;font-weight:800;color:var(--accent-dark);text-align:right;white-space:nowrap}
+  .venda-row .vlucro.neg{color:var(--danger)}
+  .venda-row .vlucro small{display:block;font-family:'Inter',sans-serif;font-weight:500;color:var(--muted);font-size:.68rem}
+
+  /* kits publicados */
+  .kit-card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:12px;
+  }
+  .kit-card.neg{border-color:#f0b7b0;background:#fffaf9}
+  .kit-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .kit-head h3{margin:0;font-size:.92rem;font-weight:700}
+  .kit-vendidos{font-size:.7rem;color:var(--muted-2);white-space:nowrap}
+  .kit-price-row{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;margin-bottom:10px;color:var(--muted)}
+  .kit-price-row .destaque{font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--ink)}
+  .kit-custo-edit{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .kit-custo-edit label{font-size:.76rem;color:var(--muted);font-weight:600}
+  .kit-custo-edit input{width:90px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:.85rem;font-family:inherit}
+  .kit-result{display:flex;gap:16px;flex-wrap:wrap;align-items:center;padding-top:10px;border-top:1px dashed var(--line);font-size:.8rem}
+  .kit-result b{font-family:'IBM Plex Mono',monospace}
+  .kit-lucro-tag{font-weight:800;font-size:.95rem;color:var(--accent-dark)}
+  .kit-lucro-tag.neg{color:var(--danger)}
+  .kit-warn{
+    margin-top:8px;font-size:.76rem;color:var(--danger);background:var(--danger-soft);
+    border-radius:8px;padding:6px 10px;
+  }
+
+  @media (max-width:640px){
+    .kpis{grid-template-columns:1fr 1fr}
+    .kpi:nth-child(3){grid-column:1/-1}
+    thead{display:none}
+    table,tbody,tr,td{display:block;width:100%}
+    tbody tr{border-bottom:1px solid var(--line);padding:10px 16px}
+    tbody td{border:none;padding:3px 0;display:flex;justify-content:space-between;gap:12px;align-items:center}
+    tbody td.prod-cell{display:block}
+    tbody td::before{content:attr(data-label);color:var(--muted-2);font-size:.68rem;font-weight:500}
+    tfoot td{display:flex;justify-content:space-between}
+    .cost-bar-track{max-width:70px;margin-left:auto}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="title-row">
+      <div>
+        <h1>🧸 Baú da Alegria</h1>
+        <p class="sub">Compras e estoque</p>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="compras">Compras</button>
+      <button class="tab-btn" data-tab="estoque">Estoque</button>
+      <button class="tab-btn" data-tab="precos">Preços</button>
+      <button class="tab-btn" data-tab="vendas">Vendas</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <!-- ===================== ABA COMPRAS ===================== -->
+  <div class="tab-panel active" id="tab-compras">
+
+    <div class="kpis">
+      <div class="kpi accent"><div class="n">R$ 1.539,14</div><div class="l">Total investido</div></div>
+      <div class="kpi"><div class="n">92</div><div class="l">Unidades</div></div>
+      <div class="kpi"><div class="n">3</div><div class="l">Compras</div></div>
+    </div>
+
+    <section class="batch" data-batch>
+      <div class="batch-head"><h2>Compra de ontem — 29/08/2026</h2><span class="batch-total">R$ 794,02</span></div>
+      <table>
+        <thead><tr><th>Produto</th><th class="num">Qtd</th><th class="num">Pago</th><th class="num">Custo/un.</th></tr></thead>
+        <tbody data-costbody></tbody>
+        <tfoot><tr><td>Total</td><td class="num">55 un</td><td class="num">R$ 794,02</td><td class="num"></td></tr></tfoot>
+      </table>
+    </section>
+
+    <section class="batch" data-batch>
+      <div class="batch-head"><h2>Compra de 02/08/2026</h2><span class="batch-total">R$ 595,12</span></div>
+      <table>
+        <thead><tr><th>Produto</th><th class="num">Qtd</th><th class="num">Pago</th><th class="num">Custo/un.</th></tr></thead>
+        <tbody data-costbody></tbody>
+        <tfoot><tr><td>Total</td><td class="num">31 un</td><td class="num">R$ 595,12</td><td class="num"></td></tr></tfoot>
+      </table>
+    </section>
+
+    <section class="batch" data-batch>
+      <div class="batch-head"><h2>Compra de 01/09/2026</h2><span class="batch-total">R$ 150,00</span></div>
+      <table>
+        <thead><tr><th>Produto</th><th class="num">Qtd</th><th class="num">Pago</th><th class="num">Custo/un.</th></tr></thead>
+        <tbody data-costbody></tbody>
+        <tfoot><tr><td>Total</td><td class="num">6 un</td><td class="num">R$ 150,00</td><td class="num"></td></tr></tfoot>
+      </table>
+    </section>
+  </div>
+
+  <!-- ===================== ABA ESTOQUE ===================== -->
+  <div class="tab-panel" id="tab-estoque">
+
+    <div class="kpis">
+      <div class="kpi accent"><div class="n" id="estoque-total-pecas">–</div><div class="l">Peças em estoque</div></div>
+      <div class="kpi"><div class="n" id="estoque-total-produtos">–</div><div class="l">Produtos</div></div>
+      <div class="kpi"><div class="n" id="estoque-total-baixo">–</div><div class="l">Estoque baixo</div></div>
+    </div>
+
+    <div class="low-alert" id="low-alert"></div>
+
+    <div class="estoque-toolbar">
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="search-input" placeholder="Buscar produto...">
+      </div>
+      <button class="toggle-btn" id="btn-sort-low">↓ Menor estoque primeiro</button>
+    </div>
+
+    <div id="estoque-container"></div>
+
+    <button class="new-cat-btn" id="btn-nova-categoria">+ Nova categoria</button>
+    <p class="save-hint" id="save-hint">Alterações salvas automaticamente</p>
+  </div>
+
+  <!-- ===================== ABA PREÇOS ===================== -->
+  <div class="tab-panel" id="tab-precos">
+
+    <div class="margin-panel">
+      <div class="row">
+        <label>🎯 Margem de lucro desejada</label>
+        <span class="margi
