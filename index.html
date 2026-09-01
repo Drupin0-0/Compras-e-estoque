@@ -126,6 +126,7 @@
   .low-alert b{cursor:default}
 
   details.cat{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);margin-bottom:12px;overflow:hidden}
+  details.cat[open]{}
   summary.cat-summary{
     list-style:none;cursor:pointer;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;
     background:#fafaf7;font-family:'Sora',sans-serif;font-weight:700;font-size:.92rem;gap:10px;
@@ -339,9 +340,9 @@
   <div class="tab-panel active" id="tab-compras">
 
     <div class="kpis">
-      <div class="kpi accent"><div class="n">R$ 1.539,14</div><div class="l">Total investido</div></div>
-      <div class="kpi"><div class="n">92</div><div class="l">Unidades</div></div>
-      <div class="kpi"><div class="n">3</div><div class="l">Compras</div></div>
+      <div class="kpi accent"><div class="n">R$ 1.389,14</div><div class="l">Total investido</div></div>
+      <div class="kpi"><div class="n">86</div><div class="l">Unidades</div></div>
+      <div class="kpi"><div class="n">2</div><div class="l">Compras</div></div>
     </div>
 
     <section class="batch" data-batch>
@@ -359,15 +360,6 @@
         <thead><tr><th>Produto</th><th class="num">Qtd</th><th class="num">Pago</th><th class="num">Custo/un.</th></tr></thead>
         <tbody data-costbody></tbody>
         <tfoot><tr><td>Total</td><td class="num">31 un</td><td class="num">R$ 595,12</td><td class="num"></td></tr></tfoot>
-      </table>
-    </section>
-
-    <section class="batch" data-batch>
-      <div class="batch-head"><h2>Compra de 01/09/2026</h2><span class="batch-total">R$ 150,00</span></div>
-      <table>
-        <thead><tr><th>Produto</th><th class="num">Qtd</th><th class="num">Pago</th><th class="num">Custo/un.</th></tr></thead>
-        <tbody data-costbody></tbody>
-        <tfoot><tr><td>Total</td><td class="num">6 un</td><td class="num">R$ 150,00</td><td class="num"></td></tr></tfoot>
       </table>
     </section>
   </div>
@@ -403,4 +395,944 @@
     <div class="margin-panel">
       <div class="row">
         <label>🎯 Margem de lucro desejada</label>
-        <span class="margi
+        <span class="margin-val" id="margin-display">20%</span>
+      </div>
+      <input type="range" id="margin-slider" min="8" max="35" value="20" step="1">
+      <p class="margin-hint">Regime: <b>CNPJ</b> (sem taxa extra de R$3/item do CPF) · preços calculados pelas faixas oficiais da Shopee, já cobrindo comissão + taxa fixa, sem sair no prejuízo.</p>
+    </div>
+
+    <h2 style="margin:0 0 12px;font-size:1.05rem">🎟️ Cupons de Vendedor</h2>
+    <p class="margin-hint" style="margin-bottom:12px">Ative um cupom pra ver como ele afeta o preço final e o seu lucro. O desconto do cupom sai do seu bolso, não da Shopee.</p>
+    <div id="cupons-container"></div>
+    <div class="cupom-add-form">
+      <input type="text" id="cupom-nome" placeholder="Nome do cupom">
+      <select id="cupom-tipo">
+        <option value="percentual">% OFF</option>
+        <option value="fixo">R$ OFF</option>
+      </select>
+      <input type="number" id="cupom-valor" placeholder="Valor" min="0" step="0.5">
+      <input type="number" id="cupom-minimo" placeholder="Gasto mín. R$" min="0" step="1">
+      <button class="add-btn" id="btn-add-cupom">Adicionar cupom</button>
+    </div>
+
+    <div id="precos-container"></div>
+
+    <h2 style="margin:28px 0 12px;font-size:1.05rem">🛒 Seus Kits Publicados na Shopee</h2>
+    <p class="margin-hint" style="margin-bottom:14px">Preços reais tirados dos seus anúncios. O custo de alguns eu tive que estimar — ajuste o campo "custo" pra ficar exato.</p>
+    <div id="kits-container"></div>
+
+    <h2 style="margin:28px 0 12px;font-size:1.05rem">📦 Combos sugeridos</h2>
+    <p class="margin-hint" style="margin-bottom:14px">Produtos abaixo de R$ 8 sozinhos caem na faixa mais cara da Shopee (comissão de 50%). Vender em kit resolve isso e ainda aumenta o ticket médio.</p>
+    <div id="combos-container"></div>
+
+  </div>
+
+  <!-- ===================== ABA VENDAS ===================== -->
+  <div class="tab-panel" id="tab-vendas">
+
+    <div class="kpis">
+      <div class="kpi accent"><div class="n" id="vendas-faturamento">–</div><div class="l">Faturamento</div></div>
+      <div class="kpi"><div class="n" id="vendas-lucro">–</div><div class="l">Lucro total</div></div>
+      <div class="kpi"><div class="n" id="vendas-qtd">–</div><div class="l">Vendas registradas</div></div>
+    </div>
+
+    <div class="venda-form">
+      <h2>+ Registrar venda</h2>
+      <div class="venda-grid">
+        <div class="venda-field">
+          <label>Data da venda</label>
+          <input type="date" id="v-data">
+        </div>
+        <div class="venda-field">
+          <label>Produto (baixa do estoque)</label>
+          <select id="v-produto"></select>
+        </div>
+        <div class="venda-field full" id="v-cores-wrap" style="display:none">
+          <label id="v-cores-label">Cores vendidas (kit sortido)</label>
+          <div id="v-cores-container" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+        </div>
+        <div class="venda-field">
+          <label>Quantidade vendida</label>
+          <input type="number" id="v-qtd" min="1" value="1">
+        </div>
+        <div class="venda-field">
+          <label>Quanto o cliente pagou (R$)</label>
+          <input type="number" id="v-venda" min="0" step="0.01" placeholder="26,90">
+        </div>
+        <div class="venda-field">
+          <label>Taxas da Shopee (R$)</label>
+          <input type="number" id="v-taxa" min="0" step="0.01" placeholder="9,38">
+        </div>
+        <div class="venda-field">
+          <label>Lucro obtido (R$)</label>
+          <input type="number" id="v-lucro" step="0.01" placeholder="4,40">
+        </div>
+        <p class="venda-hint" id="v-hint">Selecione um produto pra sugerir taxa e lucro automaticamente — os campos continuam editáveis.</p>
+        <button class="venda-submit" id="btn-add-venda">Registrar venda e dar baixa no estoque</button>
+      </div>
+    </div>
+
+    <div id="vendas-container"></div>
+
+  </div>
+
+</main>
+
+<script>
+// ============ DADOS DE COMPRAS (estático, com cálculo de barras) ============
+const COMPRAS = [
+  [ // Compra de ontem
+    { name:"Barril Pirata", code:"7448070488336", dup:2, qtd:6, pago:93.60, custo:15.60 },
+    { name:"Lança Bolhas — Caixa Prateada", code:"SKD 177 · 7908669033687", qtd:6, pago:102.96, custo:17.16 },
+    { name:"Lança Bolhas — Modelo Novo", code:"SKD 174 · 7908669033670", qtd:4, pago:72.16, custo:18.04 },
+    { name:"Ovos de Dinossauro", code:"DIN00305 · 7898656789386", dup:2, qtd:2, pago:26.24, custo:13.12 },
+    { name:"Bola Mágica Disco Voador com LED", code:"compra avulsa", qtd:10, pago:250.00, custo:25.00 },
+    { name:"Brinquedo Caranguejo", code:"7448070479211", qtd:4, pago:59.04, custo:14.76 },
+    { name:"Jogo Fright Duck — Patinho Surpresa", code:"7448070488329", dup:2, qtd:6, pago:70.20, custo:11.70 },
+    { name:"Rex Pequeno na Cinta", code:"0495", qtd:3, pago:41.82, custo:13.94 },
+    { name:"Girafinha Flexível com Ventosas", code:"7448070479419", dup:2, qtd:20, pago:78.00, custo:3.90 },
+  ],
+  [ // Compra de 02/08
+    { name:"Arma de Plástico / Pistola Lança Bolhas", code:"KK-2055", dup:2, qtd:3, pago:39.36, custo:13.12 },
+    { name:"Ovos de Dinossauro (Capie Bara Eggs)", code:"junção 002+003+004+008", dup:4, qtd:8, pago:104.96, custo:13.12 },
+    { name:"Bola Spiner", code:"BBK-010", qtd:6, pago:70.20, custo:11.70 },
+    { name:"Girafinha Flexível com Ventosas", qtd:8, pago:31.20, custo:3.90 },
+    { name:"Bola Mágica Disco Voador", qtd:4, pago:71.40, custo:17.85 },
+    { name:"Pelúcia Cachorro (Tam 22)", code:"junção 010+011", dup:2, qtd:2, pago:278.00, custo:139.00 },
+  ],
+];
+
+function brl(v){ return 'R$ ' + v.toFixed(2).replace('.', ','); }
+
+function renderCompras(){
+  document.querySelectorAll('[data-costbody]').forEach((tbody, idx) => {
+    const rows = COMPRAS[idx];
+    const max = Math.max(...rows.map(r => r.custo));
+    const min = Math.min(...rows.map(r => r.custo));
+    tbody.innerHTML = rows.map(r => {
+      const pct = Math.max(6, Math.round((r.custo / max) * 100));
+      const badge = r.custo === min ? '<span class="price-badge badge-min">mais barato</span>'
+                  : r.custo === max ? '<span class="price-badge badge-max">mais caro</span>' : '';
+      const dupTag = r.dup ? `<span class="dup">${r.dup} linhas</span>` : '';
+      const codeLine = r.code ? `<br><span class="code">${r.code}</span>` : '';
+      return `<tr>
+        <td class="prod-cell" data-label="Produto"><span class="prod">${r.name}</span>${dupTag}${codeLine}</td>
+        <td class="num" data-label="Qtd">${r.qtd} un</td>
+        <td class="num" data-label="Pago">${brl(r.pago)}</td>
+        <td class="num cost-cell" data-label="Custo/un.">
+          <span class="cost-val">${brl(r.custo)}</span>${badge}
+          <div class="cost-bar-track"><div class="cost-bar-fill" style="width:${pct}%"></div></div>
+        </td>
+      </tr>`;
+    }).join('');
+  });
+}
+renderCompras();
+
+// ============ ESTOQUE (editável + persistente) ============
+const DEFAULT_ESTOQUE = [
+  { cat:"Itens simples", items:[
+    { name:"Caranguejo", qtd:4 }, { name:"Dinossauro", qtd:3 }, { name:"Pula Pirata", qtd:6 },
+    { name:"Cachorro Pelúcia", qtd:2 }, { name:"Spinner Disco Voador", qtd:5 },
+  ]},
+  { cat:"Bola Disco Voador", items:[
+    { name:"Com LED — Rosa", qtd:4, sw:"rosa" }, { name:"Com LED — Vermelha", qtd:1, sw:"vermelho" },
+    { name:"Com LED — Azul", qtd:1, sw:"azul" }, { name:"Com LED — Verde", qtd:1, sw:"verde" },
+    { name:"Sem LED — Verde", qtd:1, sw:"verde" },
+  ]},
+  { cat:"Girafinha Flexível", items:[
+    { name:"Verde", qtd:8, sw:"verde" }, { name:"Roxa", qtd:7, sw:"roxa" },
+    { name:"Vermelha", qtd:8, sw:"vermelho" }, { name:"Azul", qtd:7, sw:"azul" },
+  ]},
+  { cat:"Ovos (Eggs)", items:[
+    { name:"Eggs Capivara", qtd:2 }, { name:"Eggs Pato", qtd:2 },
+    { name:"Eggs Pinguim", qtd:2 }, { name:"Eggs Dinossauro", qtd:3 },
+  ]},
+  { cat:"Brinquedo Fright", items:[
+    { name:"Modelo Pinguim", qtd:2 }, { name:"Modelo Sapo", qtd:2 }, { name:"Modelo Pato", qtd:2 },
+  ]},
+  { cat:"Arminha Bolinhas de Sabão", items:[
+    { name:"Modelo Antigo — Azul", qtd:2, sw:"azul" }, { name:"Modelo Antigo — Vermelha", qtd:1, sw:"vermelho" },
+    { name:"Caixa Prateada — Vermelha", qtd:3, sw:"vermelho" }, { name:"Caixa Prateada — Azul", qtd:3, sw:"azul" },
+    { name:"Modelo Novo — Azul", qtd:2, sw:"azul" }, { name:"Modelo Novo — Rosa", qtd:2, sw:"rosa" },
+  ]},
+];
+
+const LOW_STOCK_THRESHOLD = 2;
+let estoque = null;
+let sortLow = false;
+let searchTerm = '';
+let openState = {};
+let uidCounter = 1;
+function uid(){ return 'it' + (uidCounter++) + '-' + Date.now().toString(36); }
+
+function withIds(data){
+  return data.map(cat => ({
+    id: uid(), cat: cat.cat,
+    items: cat.items.map(it => ({ id: uid(), name: it.name, qtd: it.qtd, sw: it.sw || null }))
+  }));
+}
+
+async function loadEstoque(){
+  try{
+    const res = await window.storage.get('estoque-data-v2');
+    if(res && res.value){ estoque = JSON.parse(res.value); return; }
+  }catch(e){}
+  estoque = withIds(DEFAULT_ESTOQUE);
+  await saveEstoque();
+}
+async function saveEstoque(){
+  try{
+    await window.storage.set('estoque-data-v2', JSON.stringify(estoque));
+    const hint = document.getElementById('save-hint');
+    hint.textContent = 'Salvo ✓';
+    setTimeout(()=>{ hint.textContent = 'Alterações salvas automaticamente'; }, 1000);
+  }catch(e){
+    document.getElementById('save-hint').textContent = 'Erro ao salvar — tente novamente';
+  }
+}
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+function renderEstoque(){
+  const container = document.getElementById('estoque-container');
+  container.innerHTML = '';
+  let totalPecas=0, totalProdutos=0, totalBaixo=0;
+  const lowNames = [];
+
+  estoque.forEach(cat => {
+    let items = cat.items.filter(i => i.name.toLowerCase().includes(searchTerm));
+    const catAll = cat.items;
+    catAll.forEach(i=>{ totalPecas += Number(i.qtd||0); totalProdutos++; if(Number(i.qtd)<=LOW_STOCK_THRESHOLD){ totalBaixo++; lowNames.push(i.name); } });
+    if(searchTerm && items.length === 0) return;
+
+    if(sortLow) items = [...items].sort((a,b)=>a.qtd-b.qtd);
+    const maxQtd = Math.max(1, ...catAll.map(i=>i.qtd));
+
+    const details = document.createElement('details');
+    details.className = 'cat';
+    if(openState[cat.id] !== false) details.open = true;
+    details.addEventListener('toggle', ()=>{ openState[cat.id] = details.open; });
+
+    const catTotal = catAll.reduce((s,i)=>s+Number(i.qtd||0),0);
+    const summary = document.createElement('summary');
+    summary.className = 'cat-summary';
+    summary.innerHTML = `<span>${escapeHtml(cat.cat)}</span>
+      <span class="cat-meta"><span class="cat-total">${catTotal} un · ${catAll.length} itens</span><span class="chev">▶</span></span>`;
+    details.appendChild(summary);
+
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    thead.innerHTML = `<tr><th>Produto</th><th class="num">Qtd</th></tr>`;
+    table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+
+    if(items.length === 0){
+      tbody.innerHTML = `<tr><td colspan="2" class="empty-state">Nenhum item aqui ainda</td></tr>`;
+    } else {
+      items.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.className = 'qty-row';
+        const swatch = item.sw ? `<span class="swatch sw-${item.sw}"></span>` : '';
+        const low = Number(item.qtd) <= LOW_STOCK_THRESHOLD;
+        const pct = Math.max(6, Math.round((item.qtd / maxQtd) * 100));
+        tr.innerHTML = `
+          <td class="prod-cell" data-label="Produto">
+            <div class="qty-name"><span class="prod">${swatch}${escapeHtml(item.name)}</span>${low ? '<span class="low-badge">baixo</span>' : ''}</div>
+          </td>
+          <td class="num" data-label="Qtd">
+            <div class="qty-bar-wrap">
+              <div class="qty-bar-track"><div class="qty-bar-fill" style="width:${pct}%;${low?'background:var(--danger)':''}"></div></div>
+              <div class="qty-controls">
+                <button class="qty-btn" data-action="dec" data-cat="${cat.id}" data-item="${item.id}">−</button>
+                <span class="qty-val">${item.qtd}</span>
+                <button class="qty-btn" data-action="inc" data-cat="${cat.id}" data-item="${item.id}">+</button>
+                <button class="remove-btn" data-action="remove" data-cat="${cat.id}" data-item="${item.id}" title="Remover">×</button>
+              </div>
+            </div>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+    table.appendChild(tbody);
+
+    const addRow = document.createElement('div');
+    addRow.className = 'add-row';
+    addRow.innerHTML = `<div class="add-form">
+      <input type="text" placeholder="Nome do produto" data-role="new-name" data-cat="${cat.id}">
+      <input type="number" placeholder="Qtd" min="0" value="1" data-role="new-qtd" data-cat="${cat.id}">
+      <button class="add-btn" data-action="add" data-cat="${cat.id}">Adicionar</button>
+    </div>`;
+    table.appendChild(addRow);
+
+    details.appendChild(table);
+    container.appendChild(details);
+  });
+
+  document.getElementById('estoque-total-pecas').textContent = totalPecas;
+  document.getElementById('estoque-total-produtos').textContent = totalProdutos;
+  document.getElementById('estoque-total-baixo').textContent = totalBaixo;
+
+  const alertBox = document.getElementById('low-alert');
+  if(totalBaixo > 0){
+    alertBox.classList.add('show');
+    alertBox.innerHTML = `⚠️ <b>${totalBaixo} produto${totalBaixo>1?'s':''} com estoque baixo</b> (≤ ${LOW_STOCK_THRESHOLD} un): ${lowNames.map(escapeHtml).join(', ')}`;
+  } else {
+    alertBox.classList.remove('show');
+  }
+}
+
+document.getElementById('estoque-container').addEventListener('click', async (e)=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  const action = btn.dataset.action;
+  const catId = btn.dataset.cat;
+  const cat = estoque.find(c => c.id === catId);
+  if(!cat) return;
+
+  if(action === 'inc' || action === 'dec'){
+    const item = cat.items.find(i => i.id === btn.dataset.item);
+    if(!item) return;
+    item.qtd = Math.max(0, Number(item.qtd) + (action === 'inc' ? 1 : -1));
+    renderEstoque(); renderPrecos(); if(typeof popularProdutoSelect==='function') popularProdutoSelect(); await saveEstoque();
+  }
+  if(action === 'remove'){
+    cat.items = cat.items.filter(i => i.id !== btn.dataset.item);
+    renderEstoque(); renderPrecos(); if(typeof popularProdutoSelect==='function') popularProdutoSelect(); await saveEstoque();
+  }
+  if(action === 'add'){
+    const nameInput = document.querySelector(`input[data-role="new-name"][data-cat="${catId}"]`);
+    const qtdInput = document.querySelector(`input[data-role="new-qtd"][data-cat="${catId}"]`);
+    const name = (nameInput.value || '').trim();
+    const qtd = Math.max(0, parseInt(qtdInput.value, 10) || 0);
+    if(!name){ nameInput.focus(); return; }
+    cat.items.push({ id: uid(), name, qtd, sw: null });
+    renderEstoque(); renderPrecos(); if(typeof popularProdutoSelect==='function') popularProdutoSelect(); await saveEstoque();
+  }
+});
+
+document.getElementById('btn-nova-categoria').addEventListener('click', async ()=>{
+  const name = window.prompt('Nome da nova categoria:');
+  if(!name || !name.trim()) return;
+  estoque.push({ id: uid(), cat: name.trim(), items: [] });
+  renderEstoque(); renderPrecos(); if(typeof popularProdutoSelect==='function') popularProdutoSelect(); await saveEstoque();
+});
+
+document.getElementById('search-input').addEventListener('input', (e)=>{
+  searchTerm = e.target.value.trim().toLowerCase();
+  renderEstoque();
+});
+
+document.getElementById('btn-sort-low').addEventListener('click', (e)=>{
+  sortLow = !sortLow;
+  e.currentTarget.classList.toggle('on', sortLow);
+  renderEstoque();
+});
+
+// ============ PREÇOS (calculadora de taxas Shopee) ============
+// Faixas oficiais Shopee (CNPJ) — março/2026
+const FAIXAS_SHOPEE = [
+  { min:0,    max:7.99,   comissao:0.50, taxa:0,  nome:"Faixa 1" },
+  { min:8,    max:79.99,  comissao:0.20, taxa:4,  nome:"Faixa 2" },
+  { min:80,   max:99.99,  comissao:0.14, taxa:16, nome:"Faixa 3" },
+  { min:100,  max:199.99, comissao:0.14, taxa:20, nome:"Faixa 4" },
+  { min:200,  max:Infinity, comissao:0.14, taxa:26, nome:"Faixa 5" },
+];
+function getFaixa(preco){
+  return FAIXAS_SHOPEE.find(f => preco >= f.min && preco <= f.max) || FAIXAS_SHOPEE[FAIXAS_SHOPEE.length-1];
+}
+// resolve o preço mínimo que cobre custo + taxas da Shopee + a margem desejada,
+// iterando pq a faixa depende do próprio preço
+function calcularPrecoSugerido(custo, margemPct){
+  let preco = custo * 1.6;
+  for(let i=0;i<60;i++){
+    const f = getFaixa(preco);
+    const novo = (custo + f.taxa) / (1 - f.comissao - margemPct);
+    if(Math.abs(novo - preco) < 0.005){ preco = novo; break; }
+    preco = novo;
+  }
+  return preco;
+}
+function precoBonito(p){
+  // arredonda pra terminar em ,90
+  const piso = Math.floor(p);
+  let val = piso + 0.90;
+  if(val < p) val += 1;
+  return val;
+}
+function calcResultado(custo, precoFinal){
+  const f = getFaixa(precoFinal);
+  const taxaShopee = precoFinal * f.comissao + f.taxa;
+  const recebido = precoFinal - taxaShopee;
+  const lucro = recebido - custo;
+  const margem = lucro / precoFinal;
+  return { faixa:f, taxaShopee, recebido, lucro, margem };
+}
+
+// mapa de custo unitário por produto do estoque (mesmos nomes usados na aba Estoque)
+const CUSTOS = {
+  "Itens simples": {
+    "Caranguejo": 14.76, "Dinossauro": 13.94, "Pula Pirata": 15.60,
+    "Cachorro Pelúcia": 139.00, "Spinner Disco Voador": 11.70,
+  },
+  "Bola Disco Voador": {
+    "Com LED — Rosa": 25.00, "Com LED — Vermelha": 25.00,
+    "Com LED — Azul": 25.00, "Com LED — Verde": 25.00,
+    "Sem LED — Verde": 17.85,
+  },
+  "Girafinha Flexível": { "Verde": 3.90, "Roxa": 3.90, "Vermelha": 3.90, "Azul": 3.90 },
+  "Ovos (Eggs)": {
+    "Eggs Capivara": 13.12, "Eggs Pato": 13.12, "Eggs Pinguim": 13.12, "Eggs Dinossauro": 13.12,
+  },
+  "Brinquedo Fright": { "Modelo Pinguim": 11.70, "Modelo Sapo": 11.70, "Modelo Pato": 11.70 },
+  "Arminha Bolinhas de Sabão": {
+    "Modelo Antigo — Azul": 15.81, "Modelo Antigo — Vermelha": 15.81,
+    "Caixa Prateada — Vermelha": 15.81, "Caixa Prateada — Azul": 15.81,
+    "Modelo Novo — Azul": 18.04, "Modelo Novo — Rosa": 18.04,
+  },
+};
+
+let margemAtual = 0.20;
+
+// ---- kits reais publicados na Shopee ----
+const DEFAULT_KITS = [
+  { nome:"Kit Pistola Lança Bolhas — 2 Azul", vendidos:4, precoTabela:52.00, precoCupom:44.20,
+    custo:31.62, componentes:[{cat:"Arminha Bolinhas de Sabão", qtd:2, cor:"Azul"}] },
+  { nome:"Kit Pistola Lança Bolhas — 2 Vermelha", vendidos:4, precoTabela:52.90, precoCupom:44.96,
+    custo:31.62, componentes:[{cat:"Arminha Bolinhas de Sabão", qtd:2, cor:"Vermelha"}] },
+  { nome:"Kit Pistola Lança Bolhas — 1 Azul + 1 Vermelha", vendidos:4, precoTabela:51.90, precoCupom:44.11,
+    custo:31.62, componentes:[{cat:"Arminha Bolinhas de Sabão", qtd:1, cor:"Azul"},{cat:"Arminha Bolinhas de Sabão", qtd:1, cor:"Vermelha"}] },
+  { nome:"Kit Bubble Automática — 2 Azul", vendidos:4, precoTabela:62.50, precoCupom:53.12,
+    custo:36.08, componentes:[{cat:"Arminha Bolinhas de Sabão", qtd:2, cor:"Azul", modelo:"Novo"}] },
+  { nome:"Kit Bubble Automática — 2 Rosa", vendidos:4, precoTabela:62.50, precoCupom:53.12,
+    custo:36.08, componentes:[{cat:"Arminha Bolinhas de Sabão", qtd:2, cor:"Rosa", modelo:"Novo"}] },
+  { nome:"Kit Bubble Automática — 1 Azul + 1 Rosa", vendidos:4, precoTabela:62.50, precoCupom:53.12,
+    custo:36.08, componentes:[{cat:"Arminha Bolinhas de Sabão", qtd:1, cor:"Azul", modelo:"Novo"},{cat:"Arminha Bolinhas de Sabão", qtd:1, cor:"Rosa", modelo:"Novo"}] },
+  { nome:"Kit Bola Mágica Voadora c/ LED — 2 Rosa", vendidos:3, precoTabela:68.90, precoCupom:58.90,
+    custo:50.00, componentes:[{cat:"Bola Disco Voador", qtd:2, cor:"Rosa"}] },
+  { nome:"Kit Girafa Pop It — 2 unidades sortidas", vendidos:6, precoTabela:60.00, precoCupom:18.70,
+    custo:7.80, componentes:[{cat:"Girafinha Flexível", qtd:2, sortida:true}] },
+  { nome:"Kit Girafa Pop It — 4 unidades sortidas", vendidos:6, precoTabela:28.70, precoCupom:24.39,
+    custo:15.60, componentes:[{cat:"Girafinha Flexível", qtd:4, sortida:true}] },
+];
+let kits = null;
+async function loadKits(){
+  try{
+    const res = await window.storage.get('kits-data');
+    if(res && res.value){ kits = JSON.parse(res.value); return; }
+  }catch(e){}
+  kits = DEFAULT_KITS.map(k => ({ id: uid(), ...k }));
+  await saveKits();
+}
+async function saveKits(){
+  try{ await window.storage.set('kits-data', JSON.stringify(kits)); }catch(e){}
+}
+function renderKits(){
+  const container = document.getElementById('kits-container');
+  if(!kits) return;
+  container.innerHTML = kits.map(k => {
+    const r = calcResultado(k.custo, k.precoCupom);
+    const neg = r.lucro < 0;
+    return `<div class="kit-card ${neg?'neg':''}">
+      <div class="kit-head">
+        <h3>${escapeHtml(k.nome)}</h3>
+        <span class="kit-vendidos">${k.vendidos} vendido(s)</span>
+      </div>
+      <div class="kit-price-row">
+        <span>Preço de tabela: <span class="destaque">${brl(k.precoTabela)}</span></span>
+        <span>Com cupom (cliente paga): <span class="destaque">${brl(k.precoCupom)}</span></span>
+      </div>
+      <div class="kit-custo-edit">
+        <label>Custo real do kit:</label>
+        <input type="number" step="0.01" min="0" value="${k.custo.toFixed(2)}" data-action="edit-kit-custo" data-id="${k.id}">
+      </div>
+      <div class="kit-result">
+        <span>Faixa: <b>${r.faixa.nome}</b></span>
+        <span>Taxa Shopee: <b>${brl(r.taxaShopee)}</b></span>
+        <span>Recebido: <b>${brl(r.recebido)}</b></span>
+        <span class="kit-lucro-tag ${neg?'neg':''}">Lucro: ${brl(r.lucro)}</span>
+      </div>
+      ${neg ? `<div class="kit-warn">⚠️ Esse kit está vendendo no prejuízo com o custo informado. Considere reajustar o preço ou revisar o custo.</div>` : ''}
+    </div>`;
+  }).join('');
+}
+document.getElementById('kits-container').addEventListener('change', async (e)=>{
+  const inp = e.target.closest('[data-action="edit-kit-custo"]');
+  if(!inp) return;
+  const k = kits.find(x => x.id === inp.dataset.id);
+  if(!k) return;
+  k.custo = parseFloat(inp.value) || 0;
+  renderKits(); await saveKits();
+});
+
+// ---- cupons de vendedor ----
+const DEFAULT_CUPONS = [
+  { nome:"Prêmio de Seguidor", tipo:"percentual", valor:15, minimo:27, ativo:true },
+];
+let cupons = null;
+async function loadCupons(){
+  try{
+    const res = await window.storage.get('cupons-data');
+    if(res && res.value){ cupons = JSON.parse(res.value); return; }
+  }catch(e){}
+  cupons = DEFAULT_CUPONS.map(c => ({ id: uid(), ...c }));
+  await saveCupons();
+}
+async function saveCupons(){
+  try{ await window.storage.set('cupons-data', JSON.stringify(cupons)); }catch(e){}
+}
+function renderCupons(){
+  const container = document.getElementById('cupons-container');
+  if(!cupons || cupons.length === 0){
+    container.innerHTML = `<p class="empty-state">Nenhum cupom cadastrado ainda.</p>`;
+    return;
+  }
+  container.innerHTML = cupons.map(c => {
+    const label = c.tipo === 'percentual' ? `${c.valor}% OFF` : `${brl(c.valor)} OFF`;
+    return `
+      <div class="cupom-card ${c.ativo ? '' : 'off'}">
+        <div class="cupom-icon">%</div>
+        <div class="cupom-info">
+          <div class="t1">${escapeHtml(c.nome)}</div>
+          <div class="t2">${label} · gasto mínimo ${brl(c.minimo)}</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" data-action="toggle-cupom" data-id="${c.id}" ${c.ativo ? 'checked' : ''}>
+          <span class="slider-switch"></span>
+        </label>
+        <button class="cupom-remove" data-action="remove-cupom" data-id="${c.id}" title="Remover">×</button>
+      </div>`;
+  }).join('');
+}
+document.getElementById('cupons-container').addEventListener('click', async (e)=>{
+  const btn = e.target.closest('[data-action="remove-cupom"]');
+  if(!btn) return;
+  cupons = cupons.filter(c => c.id !== btn.dataset.id);
+  renderCupons(); renderPrecos(); renderCombos(); await saveCupons();
+});
+document.getElementById('cupons-container').addEventListener('change', async (e)=>{
+  const chk = e.target.closest('[data-action="toggle-cupom"]');
+  if(!chk) return;
+  const c = cupons.find(x => x.id === chk.dataset.id);
+  if(c) c.ativo = chk.checked;
+  renderPrecos(); renderCombos(); await saveCupons();
+});
+document.getElementById('btn-add-cupom').addEventListener('click', async ()=>{
+  const nome = document.getElementById('cupom-nome').value.trim();
+  const tipo = document.getElementById('cupom-tipo').value;
+  const valor = parseFloat(document.getElementById('cupom-valor').value);
+  const minimo = parseFloat(document.getElementById('cupom-minimo').value) || 0;
+  if(!nome || !valor){ document.getElementById('cupom-nome').focus(); return; }
+  cupons.push({ id: uid(), nome, tipo, valor, minimo, ativo: true });
+  document.getElementById('cupom-nome').value = '';
+  document.getElementById('cupom-valor').value = '';
+  document.getElementById('cupom-minimo').value = '';
+  renderCupons(); renderPrecos(); renderCombos(); await saveCupons();
+});
+
+// dado um preço, acha o cupom ativo aplicável que dá o MAIOR desconto
+function melhorCupomAplicavel(preco){
+  if(!cupons) return null;
+  let melhor = null, melhorDesconto = 0;
+  cupons.filter(c => c.ativo && preco >= c.minimo).forEach(c => {
+    const desconto = c.tipo === 'percentual' ? preco * (c.valor/100) : c.valor;
+    if(desconto > melhorDesconto){ melhorDesconto = desconto; melhor = c; }
+  });
+  return melhor ? { cupom: melhor, precoComCupom: Math.max(0, preco - melhorDesconto) } : null;
+}
+function cupomLinhaHtml(custo, preco){
+  const aplic = melhorCupomAplicavel(preco);
+  if(!aplic) return '';
+  const r2 = calcResultado(custo, aplic.precoComCupom);
+  const neg = r2.lucro < 0;
+  return `<div class="com-cupom-row ${neg?'neg':''}">🎟️ com "${escapeHtml(aplic.cupom.nome)}": <b>${brl(aplic.precoComCupom)}</b> · lucro ${brl(r2.lucro)}</div>`;
+}
+
+function renderPrecos(){
+  const container = document.getElementById('precos-container');
+  container.innerHTML = '';
+  if(!estoque) return;
+
+  estoque.forEach(cat => {
+    const custoMap = CUSTOS[cat.cat] || {};
+    const section = document.createElement('section');
+    section.className = 'batch';
+    section.innerHTML = `<div class="batch-head"><h2>${escapeHtml(cat.cat)}</h2></div>`;
+
+    const table = document.createElement('table');
+    table.innerHTML = `<thead><tr><th>Produto</th><th class="num">Custo</th><th class="num">Faixa</th><th class="num">Preço sugerido</th><th class="num">Lucro/un.</th></tr></thead>`;
+    const tbody = document.createElement('tbody');
+
+    cat.items.forEach(item => {
+      const custo = custoMap[item.name];
+      const tr = document.createElement('tr');
+      const swatch = item.sw ? `<span class="swatch sw-${item.sw}"></span>` : '';
+      if(custo === undefined){
+        tr.innerHTML = `
+          <td class="prod-cell" data-label="Produto"><span class="prod">${swatch}${escapeHtml(item.name)}</span></td>
+          <td class="num" data-label="Custo" colspan="4"><span class="no-cost">custo não cadastrado</span></td>`;
+      } else {
+        const bruto = calcularPrecoSugerido(custo, margemAtual);
+        const preco = precoBonito(bruto);
+        const r = calcResultado(custo, preco);
+        tr.innerHTML = `
+          <td class="prod-cell" data-label="Produto"><span class="prod">${swatch}${escapeHtml(item.name)}</span></td>
+          <td class="num mono" data-label="Custo">${brl(custo)}</td>
+          <td class="num" data-label="Faixa"><span class="faixa-tag">${r.faixa.nome}</span></td>
+          <td class="num price-cell" data-label="Preço sugerido"><span class="sugerido">${brl(preco)}</span>${cupomLinhaHtml(custo, preco)}</td>
+          <td class="num lucro-pos" data-label="Lucro/un.">${brl(r.lucro)} <span style="color:var(--muted);font-weight:400">(${(r.margem*100).toFixed(0)}%)</span></td>`;
+      }
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    section.appendChild(table);
+    container.appendChild(section);
+  });
+}
+
+// ---- combos sugeridos ----
+const COMBOS = [
+  { nome:"Kit 3 Girafinhas Sortidas", itens:"3× Girafinha Flexível (cores variadas)", custoUnit:3.90, qtd:3,
+    porque:"Sozinha (R$3,90) cai na Faixa 1 — 50% de comissão. Em kit, o preço sobe e escapa dessa faixa." },
+  { nome:"Kit 5 Girafinhas Sortidas", itens:"5× Girafinha Flexível (cores variadas)", custoUnit:3.90, qtd:5,
+    porque:"Ótimo pra escoar estoque parado — quanto mais unidades no kit, menor o peso da taxa fixa por peça." },
+  { nome:"Kit Fright Trio", itens:"1× Modelo Pinguim + 1× Modelo Sapo + 1× Modelo Pato", custoUnit:11.70, qtd:3,
+    porque:"Junta os 3 modelos do Jogo Fright Duck — aumenta o ticket médio e dá pro cliente colecionar o trio." },
+  { nome:"Kit Arminha Dupla — Caixa Prateada", itens:"2× Arminha Bolhas Caixa Prateada", custoUnit:17.16, qtd:2,
+    porque:"Bom pra festas de aniversário, onde o cliente já compra pra mais de uma criança." },
+  { nome:"Kit Diversão Completa", itens:"1× Bola Disco Voador c/ LED + 1× Spinner Disco Voador + 1× Girafinha", custoUnit:null, qtd:1, custoTotal:(25.00+11.70+3.90),
+    porque:"Combo cruzado de categorias diferentes — sobe o ticket médio da loja e melhora a faixa de comissão." },
+];
+
+function renderCombos(){
+  const container = document.getElementById('combos-container');
+  container.innerHTML = '';
+  COMBOS.forEach(c => {
+    const custoTotal = c.custoTotal !== undefined ? c.custoTotal : c.custoUnit * c.qtd;
+    const bruto = calcularPrecoSugerido(custoTotal, margemAtual);
+    const preco = precoBonito(bruto);
+    const r = calcResultado(custoTotal, preco);
+    const porUnidade = preco / (c.qtd || 1);
+    const card = document.createElement('div');
+    card.className = 'combo-card';
+    card.innerHTML = `
+      <div class="combo-head"><h3>${escapeHtml(c.nome)}</h3><span class="combo-price">${brl(preco)}</span></div>
+      <div class="combo-items">${escapeHtml(c.itens)}</div>
+      ${cupomLinhaHtml(custoTotal, preco)}
+      <div class="combo-stats">
+        <span>Custo total: <b>${brl(custoTotal)}</b></span>
+        <span>Faixa: <b>${r.faixa.nome}</b></span>
+        <span>Lucro: <b class="lucro-pos" style="color:var(--accent-dark)">${brl(r.lucro)}</b></span>
+        <span>Por unidade: <b>${brl(porUnidade)}</b></span>
+      </div>
+      <div class="combo-why">💡 ${escapeHtml(c.porque)}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+document.getElementById('margin-slider').addEventListener('input', (e)=>{
+  margemAtual = Number(e.target.value) / 100;
+  document.getElementById('margin-display').textContent = e.target.value + '%';
+  renderPrecos();
+  renderCombos();
+});
+
+// ============ VENDAS (extrato de transações) ============
+let vendas = null;
+async function loadVendas(){
+  try{
+    const res = await window.storage.get('vendas-data');
+    if(res && res.value){ vendas = JSON.parse(res.value); return; }
+  }catch(e){}
+  vendas = [];
+  await saveVendas();
+}
+async function saveVendas(){
+  try{ await window.storage.set('vendas-data', JSON.stringify(vendas)); }catch(e){}
+}
+
+function popularProdutoSelect(){
+  const sel = document.getElementById('v-produto');
+  const atual = sel.value;
+  const kitsHtml = (kits && kits.length) ? `<optgroup label="🛒 Kits publicados na Shopee">` +
+    kits.map(k => `<option value="kit|${k.id}">${escapeHtml(k.nome)}</option>`).join('') + `</optgroup>` : '';
+  sel.innerHTML = '<option value="">Selecione um produto...</option>' + kitsHtml + estoque.map(cat =>
+    `<optgroup label="${escapeHtml(cat.cat)}">` +
+    cat.items.map(it => `<option value="${cat.id}|${it.id}">${escapeHtml(it.name)} (${it.qtd} em estoque)</option>`).join('') +
+    `</optgroup>`
+  ).join('');
+  if([...sel.options].some(o => o.value === atual)) sel.value = atual;
+}
+
+function getKitPorSelect(val){
+  if(!val || !val.startsWith('kit|')) return null;
+  const kitId = val.split('|')[1];
+  return kits.find(k => k.id === kitId) || null;
+}
+
+// acha o item certo pela cor (e opcionalmente pelo modelo, pra não confundir
+// Pistola/Modelo Antigo/Caixa Prateada com Bubble/Modelo Novo, que compartilham cores)
+function encontrarItemPorCor(cat, cor, modeloHint){
+  let candidatos = cat.items.filter(i => i.name.toLowerCase().includes(cor.toLowerCase()));
+  if(modeloHint){
+    candidatos = candidatos.filter(i => i.name.toLowerCase().includes(modeloHint.toLowerCase()));
+  } else {
+    candidatos = candidatos.filter(i => !i.name.toLowerCase().includes('novo'));
+  }
+  return candidatos.sort((a,b)=>b.qtd-a.qtd)[0] || null;
+}
+
+// monta a lista de baixas (catId/itemId/qtd) que um kit vai gerar no estoque.
+// escolhas: array paralelo a kit.componentes; pra componentes sortidos, é um array
+// de itemIds (um por unidade) escolhido manualmente no formulário.
+function calcularBaixasKit(kit, qtdKits, escolhas){
+  const baixas = [];
+  kit.componentes.forEach((comp, idx) => {
+    const cat = estoque.find(c => c.cat === comp.cat);
+    if(!cat) return;
+    const totalQtd = comp.qtd * qtdKits;
+    if(comp.sortida){
+      const escolhidos = (escolhas && escolhas[idx]) || [];
+      const contagem = {};
+      escolhidos.forEach(id => { if(id) contagem[id] = (contagem[id]||0) + 1; });
+      Object.entries(contagem).forEach(([itemId, qtd]) => baixas.push({ catId: cat.id, itemId, qtd }));
+    } else if(comp.cor){
+      const item = encontrarItemPorCor(cat, comp.cor, comp.modelo);
+      if(item) baixas.push({ catId: cat.id, itemId: item.id, qtd: totalQtd });
+    } else {
+      let restante = totalQtd;
+      const ordenados = [...cat.items].sort((a,b)=>b.qtd-a.qtd);
+      for(const item of ordenados){
+        if(restante <= 0) break;
+        const tirar = Math.min(item.qtd, restante);
+        if(tirar > 0) baixas.push({ catId: cat.id, itemId: item.id, qtd: tirar });
+        restante -= tirar;
+      }
+    }
+  });
+  return baixas;
+}
+function aplicarBaixas(baixas){
+  baixas.forEach(b => {
+    const cat = estoque.find(c => c.id === b.catId);
+    const item = cat && cat.items.find(i => i.id === b.itemId);
+    if(item) item.qtd = Math.max(0, Number(item.qtd) - b.qtd);
+  });
+}
+function reverterBaixas(baixas){
+  baixas.forEach(b => {
+    const cat = estoque.find(c => c.id === b.catId);
+    const item = cat && cat.items.find(i => i.id === b.itemId);
+    if(item) item.qtd = Number(item.qtd) + b.qtd;
+  });
+}
+
+// renderiza um seletor de cor pra cada unidade de cada componente sortido do kit selecionado
+function renderCoresSelects(){
+  const wrap = document.getElementById('v-cores-wrap');
+  const container = document.getElementById('v-cores-container');
+  const val = document.getElementById('v-produto').value;
+  const kit = getKitPorSelect(val);
+  const qtdKits = Math.max(1, parseInt(document.getElementById('v-qtd').value,10) || 1);
+
+  const sortidos = kit ? kit.componentes.map((c,i)=>({...c, idx:i})).filter(c=>c.sortida) : [];
+  if(!kit || sortidos.length === 0){
+    wrap.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+  wrap.style.display = '';
+  container.innerHTML = '';
+  sortidos.forEach(comp => {
+    const cat = estoque.find(c => c.cat === comp.cat);
+    if(!cat) return;
+    const totalUnidades = comp.qtd * qtdKits;
+    for(let u=0; u<totalUnidades; u++){
+      const sel = document.createElement('select');
+      sel.dataset.compIdx = comp.idx;
+      sel.style.cssText = 'padding:7px 8px;border:1px solid var(--line);border-radius:7px;font-size:.82rem;font-family:inherit';
+      sel.innerHTML = cat.items.map((it,ii) => {
+        const swatchTxt = it.name;
+        const selected = ii === (u % cat.items.length) ? 'selected' : '';
+        return `<option value="${it.id}" ${selected}>${escapeHtml(swatchTxt)} (${it.qtd} un)</option>`;
+      }).join('');
+      container.appendChild(sel);
+    }
+  });
+}
+function lerEscolhasCores(kit){
+  const escolhas = {};
+  document.querySelectorAll('#v-cores-container select').forEach(sel => {
+    const idx = sel.dataset.compIdx;
+    if(!escolhas[idx]) escolhas[idx] = [];
+    escolhas[idx].push(sel.value);
+  });
+  return escolhas;
+}
+
+function getItemPorSelect(val){
+  if(!val) return null;
+  const [catId, itemId] = val.split('|');
+  const cat = estoque.find(c => c.id === catId);
+  if(!cat) return null;
+  const item = cat.items.find(i => i.id === itemId);
+  if(!item) return null;
+  return { cat, item, custo: (CUSTOS[cat.cat] && CUSTOS[cat.cat][item.name]) ?? 0 };
+}
+
+function sugerirTaxaELucro(){
+  renderCoresSelects();
+  const val = document.getElementById('v-produto').value;
+  const qtd = Math.max(1, parseInt(document.getElementById('v-qtd').value,10) || 1);
+  const hint = document.getElementById('v-hint');
+  const kit = getKitPorSelect(val);
+
+  if(kit){
+    const venda = kit.precoCupom * qtd;
+    const f = getFaixa(kit.precoCupom);
+    const taxaSugerida = (kit.precoCupom * f.comissao + f.taxa) * qtd;
+    const lucroSugerido = venda - taxaSugerida - (kit.custo * qtd);
+    document.getElementById('v-venda').value = venda.toFixed(2);
+    document.getElementById('v-taxa').value = taxaSugerida.toFixed(2);
+    document.getElementById('v-lucro').value = lucroSugerido.toFixed(2);
+    hint.textContent = `Kit publicado: ${f.nome} da Shopee · custo estimado ${brl(kit.custo*qtd)}. Ajuste os campos se necessário.`;
+    return;
+  }
+
+  const info = getItemPorSelect(val);
+  const venda = parseFloat(document.getElementById('v-venda').value);
+  if(!info){ hint.textContent = 'Selecione um produto pra sugerir taxa e lucro automaticamente — os campos continuam editáveis.'; return; }
+  if(isNaN(venda) || venda <= 0){
+    hint.textContent = `Custo cadastrado: ${brl(info.custo)}/un. Informe quanto o cliente pagou pra sugerir a taxa da Shopee.`;
+    return;
+  }
+  const f = getFaixa(venda);
+  const taxaSugerida = venda * f.comissao + f.taxa;
+  const lucroSugerido = venda - taxaSugerida - (info.custo * qtd);
+  document.getElementById('v-taxa').value = taxaSugerida.toFixed(2);
+  document.getElementById('v-lucro').value = lucroSugerido.toFixed(2);
+  hint.textContent = `${f.nome} da Shopee (${(f.comissao*100).toFixed(0)}% + ${brl(f.taxa)}) · custo do produto: ${brl(info.custo*qtd)}. Ajuste os campos se o valor real vier diferente.`;
+}
+['v-produto','v-qtd','v-venda'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', sugerirTaxaELucro);
+  document.getElementById(id).addEventListener('change', sugerirTaxaELucro);
+});
+
+document.getElementById('btn-add-venda').addEventListener('click', async ()=>{
+  const dataEl = document.getElementById('v-data');
+  const produtoVal = document.getElementById('v-produto').value;
+  const qtd = Math.max(1, parseInt(document.getElementById('v-qtd').value,10) || 1);
+  const venda = parseFloat(document.getElementById('v-venda').value);
+  const taxa = parseFloat(document.getElementById('v-taxa').value) || 0;
+  const lucro = parseFloat(document.getElementById('v-lucro').value);
+
+  const kit = getKitPorSelect(produtoVal);
+  const info = kit ? null : getItemPorSelect(produtoVal);
+  if(!kit && !info){ document.getElementById('v-produto').focus(); return; }
+  if(isNaN(venda)){ document.getElementById('v-venda').focus(); return; }
+
+  let baixas;
+  if(kit){
+    const escolhas = lerEscolhasCores(kit);
+    // valida que toda cor sortida foi escolhida
+    const faltando = kit.componentes.some((c,i)=> c.sortida && (!escolhas[i] || escolhas[i].length < c.qtd*qtd));
+    if(faltando){ document.getElementById('v-cores-container').scrollIntoView({behavior:'smooth'}); return; }
+    baixas = calcularBaixasKit(kit, qtd, escolhas);
+  } else {
+    baixas = [{ catId: info.cat.id, itemId: info.item.id, qtd }];
+  }
+
+  vendas.unshift({
+    id: uid(),
+    data: dataEl.value || new Date().toISOString().slice(0,10),
+    isKit: !!kit,
+    produtoNome: kit ? kit.nome : info.item.name,
+    categoria: kit ? 'Kit publicado' : info.cat.cat,
+    qtd, venda, taxa,
+    lucro: isNaN(lucro) ? (venda - taxa - (kit ? kit.custo*qtd : info.custo*qtd)) : lucro,
+    baixas,
+  });
+
+  aplicarBaixas(baixas);
+
+  await saveVendas();
+  await saveEstoque();
+  renderEstoque(); renderPrecos(); popularProdutoSelect();
+  renderVendas();
+
+  // limpa o formulário
+  document.getElementById('v-produto').value = '';
+  document.getElementById('v-qtd').value = 1;
+  document.getElementById('v-venda').value = '';
+  document.getElementById('v-taxa').value = '';
+  document.getElementById('v-lucro').value = '';
+  document.getElementById('v-hint').textContent = 'Selecione um produto pra sugerir taxa e lucro automaticamente — os campos continuam editáveis.';
+  renderCoresSelects();
+});
+
+document.getElementById('vendas-container').addEventListener('click', async (e)=>{
+  const btn = e.target.closest('[data-action="remove-venda"]');
+  if(!btn) return;
+  const v = vendas.find(x => x.id === btn.dataset.id);
+  if(!v) return;
+  if(!window.confirm(`Remover essa venda? A quantidade (${v.qtd}) volta pro estoque.`)) return;
+  reverterBaixas(v.baixas || []);
+  vendas = vendas.filter(x => x.id !== v.id);
+  await saveVendas(); await saveEstoque();
+  renderEstoque(); renderPrecos(); popularProdutoSelect();
+  renderVendas();
+});
+
+function renderVendas(){
+  const container = document.getElementById('vendas-container');
+  if(!vendas || vendas.length === 0){
+    container.innerHTML = `<p class="empty-state">Nenhuma venda registrada ainda.</p>`;
+  } else {
+    container.innerHTML = vendas.map(v => {
+      const dataFmt = v.data ? v.data.split('-').reverse().join('/') : '';
+      const neg = v.lucro < 0;
+      return `<div class="venda-row">
+        <div class="vinfo">
+          <div class="t1">${escapeHtml(v.produtoNome)} <span style="color:var(--muted-2);font-weight:400">× ${v.qtd}</span></div>
+          <div class="t2">${dataFmt} · vendido por ${brl(v.venda)} · taxa Shopee ${brl(v.taxa)}</div>
+        </div>
+        <div class="vlucro ${neg?'neg':''}">${brl(v.lucro)}<small>lucro</small></div>
+        <button class="remove-btn" data-action="remove-venda" data-id="${v.id}" title="Remover venda">×</button>
+      </div>`;
+    }).join('');
+  }
+
+  const faturamento = vendas.reduce((s,v)=>s+v.venda, 0);
+  const lucroTotal = vendas.reduce((s,v)=>s+v.lucro, 0);
+  document.getElementById('vendas-faturamento').textContent = brl(faturamento);
+  document.getElementById('vendas-lucro').textContent = brl(lucroTotal);
+  document.getElementById('vendas-qtd').textContent = vendas.length;
+}
+
+document.querySelectorAll('.tab-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('tab-'+b.dataset.tab).classList.add('active');
+  });
+});
+
+(async function init(){
+  await loadEstoque();
+  await loadCupons();
+  await loadKits();
+  await loadVendas();
+  renderEstoque();
+  renderCupons();
+  renderPrecos();
+  renderCombos();
+  renderKits();
+  popularProdutoSelect();
+  renderVendas();
+  document.getElementById('v-data').value = new Date().toISOString().slice(0,10);
+})();
+</script>
+</body>
+</html>
